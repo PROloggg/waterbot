@@ -24,3 +24,15 @@ https://waterbot-cheer.000webhostapp.com/
 ```
 0 15 * * *
 ```
+
+Полезные ссылки:
+```
+Установить Docker
+https://docs.docker.com/get-docker/
+
+Установить Docker-compose
+https://docs.docker.com/compose/install/
+
+Установить traefik
+https://github.com/mediaten/traefik
+```

@@ -9,7 +9,7 @@
 class VkSender
 {
     //Строка для подтверждения адреса сервера из настроек Callback API
-    public $confirmationToken = 'af6f4974';
+    public $confirmationToken = '68ccc70a';
 
     //Ключ доступа сообщества
     public $token = '6c183f12e6a58269c8a92a4b9c5d9ea0b6cf10706094af0fb10b15abdb92599c7665a33546689c01dc2c7';
