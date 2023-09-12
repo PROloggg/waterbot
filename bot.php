@@ -23,8 +23,14 @@ if (!in_array($dayOfWeek, $trainingDays)) {
     return false;
 }
 
+//если в файле стопа стоит метка что бот не работает, то ничего не шлем
+$stopmark = file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . 'stopmark.json');
+if (!empty($stopmark)) {
+    return false;
+}
 
-//если в файле стоит метка что следующей тренировки не будет, то ничего не шлем и чистим метку
+
+//если в файле пропуска стоит метка что следующей тренировки не будет, то ничего не шлем и чистим метку
 $passmark = file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . 'passmark.json');
 if (!empty($passmark)) {
     file_put_contents(__DIR__ . DIRECTORY_SEPARATOR . 'passmark.json', '');

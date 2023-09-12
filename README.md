@@ -2,7 +2,6 @@
 
 ВК бот 
 https://vk.com/club174535003
-https://waterbot-cheer.000webhostapp.com/
 
 решает кому нести воду на тренировку
 -----------------
