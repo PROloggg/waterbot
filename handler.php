@@ -48,6 +48,17 @@ switch ($data->type) {
             return;
         }
 
+        if ($data->object->body === 'IsWork') {
+            //Поверяем работает ли бот
+            $stopData = file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . 'stopmark.json');
+            $messageWork = 'Бот работает';
+            if (empty(json_decode($stopData)) === false) {
+                $messageWork = 'Бот не работает';
+            }
+            $vk->sendMessageToUser($userId, $messageWork);
+            return;
+        }
+
 
         //получаем список водоносов
         $waterBoys = $vk->getWaterBoysList();
@@ -66,6 +77,7 @@ switch ($data->type) {
             $vk->sendMessageToUser($userId, "
                 Любое сообщение - получить список водоносов <br>
                 Cancel - отменить воду на 1 тренировку <br>
+                IsWork - Узнать работает ли бот <br>
                 Stop - остановить бота насовсем <br>
                 Start - запустить бота <br>
                 GetList - получить json список водоносов для перезаписи <br>
