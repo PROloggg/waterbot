@@ -43,6 +43,7 @@ class VkSender
         $request_params = [
             'message' => $message,
             'user_id' => $userId,
+            'peer_id' => $userId,
             'access_token' => $this->token,
             'v' => $this->v
         ];
