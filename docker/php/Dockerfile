@@ -1,4 +1,4 @@
-FROM yiisoftware/yii2-php:7.1-fpm
+FROM yiisoftware/yii2-php:7.2-fpm
 
 RUN docker-php-ext-install sockets
 

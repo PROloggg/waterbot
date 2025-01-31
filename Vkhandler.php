@@ -1,13 +1,18 @@
 <?php
+
+
 if (!isset($_REQUEST)) {
     return;
 }
+
+require "EnvParser.php";
 require "VkSender.php";
 
 //Получаем и декодируем уведомление
 $data = json_decode(file_get_contents('php://input'));
 
-$vk = new VkSender();
+$env = EnvParser::parse();
+$vk = new VkSender($env['VK_BOT_TOKEN']);
 
 // проверяем secretKey
 if ($vk->checkSecretKey($data)) {
@@ -25,7 +30,7 @@ switch ($data->type) {
     //Если это уведомление о новом сообщении...
     case 'message_new':
         //...получаем id его автора
-        $userId = $data->object->from_id;
+        $userId = (string)$data->object->from_id;
 
         if ($data->object->text === 'Cancel') {
             //ставим метку что тренировки не будет
@@ -65,7 +70,7 @@ switch ($data->type) {
 
         if ($data->object->text === 'GetList') {
             //получаем json список
-            $data = file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . 'waterboys.json');
+            $data = file_get_contents($vk->filePath);
             $mes = $data . '<br>' .
                 'число - это id пользователя вк <br> true - его очередь <br> false - не его очередь <br> очень важно сохранить структуру, все : {} " , иначе ничего не будет работать'
                 . 'Для перезаписи списка отправь Rewrite:{список пользователей}';
@@ -74,7 +79,9 @@ switch ($data->type) {
         }
 
         if ($data->object->text === 'Help') {
-            $vk->sendMessageToUser($userId, "
+            $vk->sendMessageToUser(
+                $userId,
+                "
                 Любое сообщение - получить список водоносов <br>
                 Cancel - отменить воду на 1 тренировку <br>
                 IsWork - Узнать работает ли бот <br>
@@ -82,23 +89,24 @@ switch ($data->type) {
                 Start - запустить бота <br>
                 GetList - получить json список водоносов для перезаписи <br>
                 Rewrite:{список пользователей} - обновить список водоносов
-            ");
+            "
+            );
             return;
         }
 
         // Проверяем, начинается ли строка с "Rewrite:"
-        if (strpos($data->object->text, 'Rewrite:') === 0) {
+        if (strpos($data->object->text, 'Rewrite:') > 0) {
             $isDecode = false;
             // Найдено совпадение
             // Извлекаем текст между фигурными скобками
             preg_match('/\{([^}]+)\}/', $data->object->text, $matches);
             if (isset($matches[0])) {
                 $extractedText = $matches[0];
-
+                $decoded = json_decode($extractedText, true);
                 // $matches[0] содержит всю найденную строку
-                if (json_decode($extractedText, true) !== null) {
+                if ($decoded !== null) {
                     $isDecode = true;
-                    $vk->rewriteWaterBoysList($extractedText);
+                    $vk->rewriteWaterBoysList($decoded);
                 }
                 if ($isDecode === false) {
                     $vk->sendMessageToUser($userId, 'Строка не соответствует шаблону. список не изменен.');
@@ -127,5 +135,4 @@ switch ($data->type) {
 
         $vk->sendMessageToUser($userId, $message);
         break;
-
 }
