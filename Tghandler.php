@@ -176,19 +176,6 @@ if (isset($data->message)) {
             $tg->sendMessageToUser($chatId, $messageWork, $keyboard);
             break;
 
-        case 'GetList':
-        case 'Список':
-        case '📋 Список':
-            // Получаем JSON список водоносов
-            $data = file_get_contents($tg->filePath);
-            $mes = $data . "\n\n" .
-                "число - это ник пользователя в Telegram\n" .
-                "true - его очередь\n" .
-                "false - не его очередь\n" .
-                "Для перезаписи списка отправь Rewrite:{список пользователей}";
-            $tg->sendMessageToUser($chatId, $mes, $keyboard);
-            break;
-
         case '📝 Обновить':
         case 'Обновить':
             $tg->sendMessageToUser(
