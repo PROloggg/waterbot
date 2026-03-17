@@ -35,3 +35,13 @@ https://docs.docker.com/compose/install/
 Установить traefik
 https://github.com/mediaten/traefik
 ```
+
+---------------
+Локальный запуск без Traefik:
+```
+make up-local
+```
+Приложение будет доступно на:
+```
+http://localhost:8080
+```

@@ -1,0 +1,19 @@
+services:
+  nginx:
+    volumes:
+      - ./docker/nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+      - ./:/app:delegated
+    ports:
+      - "8080:80"
+    labels:
+      traefik.enable: "false"
+
+  bot:
+    volumes:
+      - ./:/app:delegated
+
+  php-cron:
+    volumes:
+      - ./docker/php-cron/docker-php-entrypoint:/usr/local/bin/docker-php-entrypoint:delegated
+      - ./docker/php-cron/schedule:/etc/cron.d/schedule
+      - ./:/app:delegated
