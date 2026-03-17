@@ -14,8 +14,8 @@ $data = json_decode(file_get_contents('php://input'));
 
 $env = EnvParser::parse();
 $tg = new TgSender($env['TG_BOT_TOKEN']);
-//$groupChatId = '-1002176249458';
-$groupChatId = '209097576';
+$groupChatId = '-1002176249458';
+//$groupChatId = '209097576'; //me
 
 function buildWaterBoysMessage(array $waterBoys): string
 {
@@ -78,13 +78,51 @@ function getInitiatorName(object $message): string
     return 'Неизвестный пользователь';
 }
 
+function parseSimpleRewriteList(string $text): ?array
+{
+    if (!preg_match('/^(Обновить|RewriteList)\s*:\s*(.*)$/su', $text, $matches)) {
+        return null;
+    }
+
+    $rawList = trim($matches[2]);
+    if ($rawList === '') {
+        return [];
+    }
+
+    $items = preg_split('/[\n,;]+/u', $rawList);
+    $prepared = [];
+    foreach ($items as $item) {
+        $value = trim($item);
+        $value = preg_replace('/^\s*(?:[-*•]+|\d+[.)])\s*/u', '', $value);
+        $value = trim((string)$value, " \t\n\r\0\x0B\"'");
+
+        if ($value === '') {
+            continue;
+        }
+
+        $prepared[] = $value;
+    }
+
+    $prepared = array_values(array_unique($prepared));
+    if (count($prepared) === 0) {
+        return [];
+    }
+
+    $result = [];
+    foreach ($prepared as $index => $userId) {
+        $result[$userId] = $index === 0;
+    }
+
+    return $result;
+}
+
 $keyboard = [
     'reply_markup' => json_encode([
         'keyboard' => [
-            [['text' => 'Отмена'], ['text' => 'Статус']],
-            [['text' => 'Стоп'], ['text' => 'Старт']],
-            [['text' => 'Назад'], ['text' => 'Вперед']],
-            [['text' => 'Список'], ['text' => 'Помощь']],
+            [['text' => '🚫 Отмена'], ['text' => '📊 Статус']],
+            [['text' => '⏹ Стоп'], ['text' => '▶️ Старт']],
+            [['text' => '⬅️ Назад'], ['text' => '➡️ Вперед']],
+            [['text' => '📝 Обновить'], ['text' => '📋 Список']],
         ],
         'resize_keyboard' => true,
         'one_time_keyboard' => false,
@@ -104,6 +142,7 @@ if (isset($data->message)) {
     switch ($text) {
         case 'Cancel':
         case 'Отмена':
+        case '🚫 Отмена':
             // Ставим метку, что тренировки не будет
             file_put_contents(__DIR__ . DIRECTORY_SEPARATOR . 'passmark.json', 'true');
             $tg->sendMessageToUser($chatId, 'Вода для тренировки отменена', $keyboard);
@@ -111,6 +150,7 @@ if (isset($data->message)) {
 
         case 'Stop':
         case 'Стоп':
+        case '⏹ Стоп':
             // Ставим метку, что бот остановлен
             file_put_contents(__DIR__ . DIRECTORY_SEPARATOR . 'stopmark.json', 'true');
             $tg->sendMessageToUser($chatId, 'Бот остановлен. Отправь Start чтобы запустить.', $keyboard);
@@ -118,6 +158,7 @@ if (isset($data->message)) {
 
         case 'Start':
         case 'Старт':
+        case '▶️ Старт':
             // Очищаем метку, что бот остановлен
             file_put_contents(__DIR__ . DIRECTORY_SEPARATOR . 'stopmark.json', '');
             $tg->sendMessageToUser($chatId, 'Бот запущен. Отправь Stop чтобы остановить.', $keyboard);
@@ -125,6 +166,7 @@ if (isset($data->message)) {
 
         case 'IsWork':
         case 'Статус':
+        case '📊 Статус':
             // Проверяем, работает ли бот
             $stopData = file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . 'stopmark.json');
             $messageWork = 'Бот работает';
@@ -136,6 +178,7 @@ if (isset($data->message)) {
 
         case 'GetList':
         case 'Список':
+        case '📋 Список':
             // Получаем JSON список водоносов
             $data = file_get_contents($tg->filePath);
             $mes = $data . "\n\n" .
@@ -146,8 +189,23 @@ if (isset($data->message)) {
             $tg->sendMessageToUser($chatId, $mes, $keyboard);
             break;
 
+        case '📝 Обновить':
+        case 'Обновить':
+            $tg->sendMessageToUser(
+                $chatId,
+                "Отправь список так:\n" .
+                "Обновить:\n" .
+                "@nick1\n" .
+                "@nick2\n" .
+                "Имя Фамилия\n\n" .
+                "Можно и в одну строку: Обновить: @nick1, @nick2, Имя Фамилия",
+                $keyboard
+            );
+            break;
+
         case 'QueueForward':
         case 'Вперед':
+        case '➡️ Вперед':
             // Сдвиг очереди вперед
             $waterBoys = $tg->shiftWaterBoysQueue(1);
             $tg->sendMessageToUser($chatId, buildWaterBoysMessage($waterBoys), $keyboard);
@@ -159,6 +217,7 @@ if (isset($data->message)) {
 
         case 'QueueBack':
         case 'Назад':
+        case '⬅️ Назад':
             // Сдвиг очереди назад
             $waterBoys = $tg->shiftWaterBoysQueue(-1);
             $tg->sendMessageToUser($chatId, buildWaterBoysMessage($waterBoys), $keyboard);
@@ -168,25 +227,20 @@ if (isset($data->message)) {
             );
             break;
 
-        case 'Help':
-        case 'Помощь':
-            // Отправляем список команд
-            $tg->sendMessageToUser(
-                $chatId,
-                "Доступные команды:\n" .
-                "Cancel - отменить воду на 1 тренировку\n" .
-                "IsWork - узнать, работает ли бот\n" .
-                "Stop - остановить бота\n" .
-                "Start - запустить бота\n" .
-                "QueueForward - перевести очередь вперед\n" .
-                "QueueBack - перевести очередь назад\n" .
-                "GetList - получить JSON список водоносов\n" .
-                "Rewrite:{список пользователей} - обновить список водоносов",
-                $keyboard
-            );
-            break;
-
         default:
+            $simpleList = parseSimpleRewriteList($text);
+            if ($simpleList !== null) {
+                if (count($simpleList) === 0) {
+                    $tg->sendMessageToUser($chatId, 'Не удалось распознать список. Добавь хотя бы одного человека после "Обновить:".', $keyboard);
+                    break;
+                }
+
+                $tg->rewriteWaterBoysList($simpleList);
+                $tg->sendMessageToUser($chatId, 'Список водоносов успешно изменен.', $keyboard);
+                $tg->sendMessageToUser($chatId, buildWaterBoysMessage($simpleList), $keyboard);
+                break;
+            }
+
             // Проверяем, начинается ли строка с "Rewrite:"
             if (strpos($text, 'Rewrite:') === 0) {
                 $isDecode = false;
@@ -200,6 +254,7 @@ if (isset($data->message)) {
                     }
                     if ($isDecode) {
                         $tg->sendMessageToUser($chatId, 'Список водоносов успешно изменен.', $keyboard);
+                        $tg->sendMessageToUser($chatId, buildWaterBoysMessage($decoded), $keyboard);
                     } else {
                         $tg->sendMessageToUser($chatId, 'Строка не соответствует шаблону. Список не изменен.', $keyboard);
                     }
