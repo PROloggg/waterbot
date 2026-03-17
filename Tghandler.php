@@ -198,7 +198,7 @@ if (isset($data->message)) {
             $tg->sendMessageToUser($chatId, buildWaterBoysMessage($waterBoys), $keyboard);
             $tg->sendMessageToUser(
                 $groupChatId,
-                getInitiatorName($message) . ' перевел очередь вперед'
+                getInitiatorName($message) . ' перевел очередь вперед вперед'
             );
             break;
 
