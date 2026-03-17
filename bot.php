@@ -61,19 +61,7 @@ if ($sender instanceof TgSender) {
 $sender->sendMessageToUser($sendToId, $message);
 
 
-//обнуляем водоносов и назначаем следующего
-$ready = false;
-foreach ($waterBoys as $id => $flag) {
-    $waterBoys[$id] = false;
-    if ($ready) {
-        $waterBoys[$id] = true;
-    }
-
-    $ready = $flag;
-}
-
-//перезаписываем файл со списком водоносов
-$sender->rewriteWaterBoysList($waterBoys);
-
+// Сдвигаем очередь вперед на одного
+$sender->shiftWaterBoysQueue(1);
 
 

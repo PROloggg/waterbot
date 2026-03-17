@@ -20,12 +20,15 @@ class TgSender extends AbstractApiSender
     }
 
     // Отправка сообщения пользователю
-    public function sendMessageToUser(string $userId, string $message): void
+    public function sendMessageToUser(string $userId, string $message, array $extraParams = []): void
     {
         $request_params = [
             'chat_id' => $userId,
             'text' => $message,
         ];
+        if (!empty($extraParams)) {
+            $request_params = array_merge($request_params, $extraParams);
+        }
 
         $get_params = http_build_query($request_params);
         file_get_contents("https://api.telegram.org/bot{$this->token}/sendMessage?{$get_params}");
